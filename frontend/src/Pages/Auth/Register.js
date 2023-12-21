@@ -110,14 +110,15 @@ const Register = () => {
 								value: "#ffcc00",
 							},
 							shape: {
-								type: "circle",
+								// type: "circle",
+								type: ["circle", "square", "triangle", "polygon", "star"],
 							},
 							opacity: {
 								value: 0.5,
 								random: true,
 							},
 							size: {
-								value: 3,
+								value: 10,
 								random: { enable: true, minimumValue: 1 },
 							},
 							links: {
