@@ -3,6 +3,13 @@ import Header from "../../components/Header";
 import { useNavigate } from "react-router-dom";
 import { Button, Modal, Form, Container } from "react-bootstrap";
 // import loading from "../../assets/loader.gif";
+import {
+	Dropdown,
+	DropdownButton,
+	Form as BootstrapForm,
+	Button as btnbill,
+} from "react-bootstrap";
+
 import "./home.css";
 import { addTransaction, getTransactions } from "../../utils/ApiRequest";
 import axios from "axios";
@@ -94,7 +101,63 @@ const Home = () => {
 	// 		startVoiceRecognition(formFields[0]);
 	// 	}
 	// };
+	const [notificationScheduled, setNotificationScheduled] = useState(false);
+	const [billName, setBillName] = useState("");
+	const [dueDate, setDueDate] = useState("");
+	const [bills, setBills] = useState([]);
+	const handleAddBill = () => {
+		if (!billName || !dueDate) {
+			// Add proper error handling or show a message to the user
+			return;
+		}
 
+		// Update the list of bills
+		const newBill = { billName, dueDate };
+		setBills((prevBills) => [...prevBills, newBill]);
+
+		console.log("Added Bill:", newBill);
+		setBillName("");
+		setDueDate("");
+		setNotificationScheduled(false);
+	};
+
+	useEffect(() => {
+		// Check if the due date is within a certain threshold (e.g., 1 day)
+		const dueDateThreshold = 24 * 60 * 60 * 1000; // 1 day in milliseconds
+
+		const today = new Date();
+		const dueDate = new Date("2023-12-31"); // Replace with the actual due date from your data
+
+		if (dueDate - today > 0 && dueDate - today <= dueDateThreshold) {
+			// Schedule a notification if the due date is within the threshold
+			if (!notificationScheduled) {
+				scheduleNotification(dueDate);
+				setNotificationScheduled(true);
+			}
+		} else {
+			// Reset the notification flag if the due date is outside the threshold
+			setNotificationScheduled(false);
+		}
+	}, [notificationScheduled]);
+	const scheduleNotification = (dueDate) => {
+		// Use the Notification API to show a notification
+		if ("Notification" in window) {
+			Notification.requestPermission().then((permission) => {
+				if (permission === "granted") {
+					const notificationOptions = {
+						body: `Your bill is due on ${dueDate.toLocaleDateString()}`,
+					};
+
+					// Schedule the notification after a certain delay (e.g., 1 hour before due date)
+					const notificationDelay =
+						dueDate.getTime() - 60 * 60 * 1000 - new Date().getTime(); // 1 hour before due date
+					setTimeout(() => {
+						new Notification("Bill Reminder", notificationOptions);
+					}, notificationDelay);
+				}
+			});
+		}
+	};
 	const handleStartChange = (date) => {
 		setStartDate(date);
 	};
@@ -294,9 +357,40 @@ const Home = () => {
 								<Button onClick={handleShow} className="addNew">
 									Add New
 								</Button>
-								{/* <Button onClick={handleVoiceRecognitionShow} className="addNew">
-									Add using Voice
-								</Button> */}
+								<div className="container">
+									<DropdownButton title="Select Bill" id="dropdown-menu">
+										{bills.map((bill, index) => (
+											<Dropdown.Item key={index}>{bill.billName}</Dropdown.Item>
+										))}
+										<Dropdown.Divider />
+										<Dropdown.Item eventKey="addBill">
+											<div className="add-bill-form">
+												<h2>Add Bill</h2>
+												<BootstrapForm>
+													<BootstrapForm.Group controlId="formBillName">
+														<BootstrapForm.Label>
+															Bill Name:
+														</BootstrapForm.Label>
+														<BootstrapForm.Control
+															type="text"
+															value={billName}
+															onChange={(e) => setBillName(e.target.value)}
+														/>
+													</BootstrapForm.Group>
+													<BootstrapForm.Group controlId="formDueDate">
+														<BootstrapForm.Label>Due Date:</BootstrapForm.Label>
+														<BootstrapForm.Control
+															type="date"
+															value={dueDate}
+															onChange={(e) => setDueDate(e.target.value)}
+														/>
+													</BootstrapForm.Group>
+													<btnbill onClick={handleAddBill}>Add Bill</btnbill>
+												</BootstrapForm>
+											</div>
+										</Dropdown.Item>
+									</DropdownButton>
+								</div>
 								<Button onClick={handleShow} className="mobileBtn">
 									+
 								</Button>
